@@ -51,7 +51,7 @@ public class Elevator extends SubsystemBase {
       
 
         
-              encoder = elevatorMotor.getEncoder();
+        encoder = elevatorMotor.getEncoder();
         bottomLimit = new DigitalInput(ElevatorConstants.limitSwitchPort);
 
         resetConfig.idleMode(IdleMode.kBrake);
@@ -117,7 +117,12 @@ public class Elevator extends SubsystemBase {
 
         // Update SmartDashboard
         updateTelemetry();
+
+        
+
     }
+
+    
 
     private void handleBottomLimit() {
         stopMotors();
@@ -148,6 +153,8 @@ public class Elevator extends SubsystemBase {
                ElevatorConstants.kV * state.velocity;
     }
 
+
+    
     public void setPositionInches(double inches) {
         if (!isHomed && inches > 0) {
             System.out.println("Warning: Elevator not homed! Home first before moving to positions.");
@@ -171,7 +178,7 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putString("Elevator State", currentTarget.toString());
         SmartDashboard.putNumber("Elevator Current", elevatorMotor.getOutputCurrent());
         SmartDashboard.putNumber("Elevator Velocity", currentState.velocity);
-        SmartDashboard.putNumber("Current position", currentPos);
+        SmartDashboard.putString("Active Command", getCurrentCommand() != null ? getCurrentCommand().getName() : "None");
     }
 
     public double getHeightInches() {
@@ -179,8 +186,6 @@ public class Elevator extends SubsystemBase {
     }
 
     public void homeElevator() {
-
-        
         elevatorMotor.set(-0.1); // Slow downward movement until bottom limit is hit
         if (bottomLimit.get()) {
             handleBottomLimit();
@@ -196,6 +201,7 @@ public class Elevator extends SubsystemBase {
         return isHomed;
     }
 
+
     public ElevatorPosition getCurrentTarget() {
         return currentTarget;
     }
@@ -209,6 +215,8 @@ public class Elevator extends SubsystemBase {
         if (!isHomed && power < 0) {
             power = 0;
         }
+
+        
         
         if (getHeightInches() >= ElevatorConstants.maxPos && power > 0) {
             power = 0;
@@ -219,12 +227,6 @@ public class Elevator extends SubsystemBase {
         }
         
         elevatorMotor.set(MathUtil.clamp(power, -ElevatorConstants.max_output, ElevatorConstants.max_output));
-    }
-
-    public void setPosition(){
-
-
-
     }
 }
 

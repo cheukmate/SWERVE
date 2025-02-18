@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -32,12 +33,12 @@ public class RobotContainer
 {
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
+  final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
   
   private Elevator m_elevator = new Elevator();
   private Intake intake = new Intake();
 
-  final         CommandXboxController driverXbox = new CommandXboxController(0);
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve/neo"));
@@ -147,7 +148,6 @@ public class RobotContainer
       driverXbox.back().whileTrue(drivebase.centerModulesCommand());
       driverXbox.leftBumper().onTrue(Commands.none());
       driverXbox.rightBumper().onTrue(Commands.none());
-      
     } else
     {
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
@@ -159,35 +159,44 @@ public class RobotContainer
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.rightBumper().onTrue(Commands.none());
+      driverXbox.rightBumper().whileTrue(Commands.none());
 
-    //Operator commands
+
+          //Operator commands
   //  operatorXbox.leftBumper().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L1)));
   //  operatorXbox.rightBumper().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L2)));
   //  operatorXbox.leftTrigger().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L3)));
-  //  operatorXbox.rightTrigger().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L4)));
+  //   operatorXbox.rightTrigger().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L4), m_elevator));
 
-  operatorXbox.rightTrigger().whileTrue(new InstantCommand(() -> m_elevator.setManualPower(.2)));
-  // operatorXbox.rightTrigger().whileFalse(new InstantCommand(() -> m_elevator.setManualPower(0)));
-  operatorXbox.rightTrigger().whileFalse(new InstantCommand(() -> m_elevator.stopMotors()));
+  // operatorXbox.rightTrigger().whileTrue(new InstantCommand(() -> m_elevator.setManualPower(.2)));
+  // // operatorXbox.rightTrigger().whileFalse(new InstantCommand(() -> m_elevator.setManualPower(0)));
+  // operatorXbox.rightTrigger().whileFalse(new InstantCommand(() -> m_elevator.stopMotors()));
   
 
-   operatorXbox.leftBumper().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-   operatorXbox.rightBumper().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-   operatorXbox.leftTrigger().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-   operatorXbox.rightTrigger().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
+  //  operatorXbox.leftBumper().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
+  //  operatorXbox.rightBumper().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
+  //  operatorXbox.leftTrigger().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
+  //  operatorXbox.rightTrigger().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
 
   //  operatorXbox.a().onTrue(new InstantCommand(() -> m_elevator.homeElevator()));;
 
 
-  operatorXbox.b().onTrue(new InstantCommand(() -> intake.shootCoral(.2)));
-  operatorXbox.x().onTrue(new InstantCommand(() -> intake.intakeCoral(.2)));
-  operatorXbox.a().onTrue(new InstantCommand(() -> intake.GetOutTheWay()));
-  operatorXbox.y().onTrue(new InstantCommand(() -> m_elevator.stopMotors()));
+  new Trigger(() -> operatorXbox.leftBumper().getAsBoolean())
+    .debounce(0.1)
+    .onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L1)));
 
-  operatorXbox.b().onFalse(new InstantCommand(() -> intake.stopItIntake()));
-  operatorXbox.x().onFalse(new InstantCommand(() -> intake.stopItIntake()));
-  operatorXbox.a().onFalse(new InstantCommand(() -> intake.stopItRotate()));
+    
+   
+  operatorXbox.b().onTrue(new InstantCommand(() -> intake.shootCoral(.2)));
+  operatorXbox.x().onTrue(new InstantCommand(() -> intake.intakeCoral(-.2)));
+
+  operatorXbox.b().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
+  operatorXbox.x().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
+
+  new Trigger(() -> operatorXbox.rightBumper().getAsBoolean())
+  .debounce(.1)
+  .onTrue(new InstantCommand(() -> intake.setPositionDegrees(Constants.IntakeConstants.STARTING)));
+ 
   
  
 

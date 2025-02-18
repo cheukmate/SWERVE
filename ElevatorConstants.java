@@ -1,6 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.units.Units;
 
 public class ElevatorConstants {
 
