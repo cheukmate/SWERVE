@@ -8,25 +8,37 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.ElevatorConstants;
 
 public class Elevator extends SubsystemBase {
     private final SparkMax elevatorMotor;
     
+    private final DCMotor m_elevatorGearbox = DCMotor.getNEO(1);
     private final RelativeEncoder encoder;
     private final DigitalInput bottomLimit;
-    private final PIDController pidController;
+    private final ProfiledPIDController pidController;
     private final TrapezoidProfile.Constraints constraints;
     private TrapezoidProfile.State goalState;
     private TrapezoidProfile.State currentState;
     private final TrapezoidProfile profile;
 
-    private ElevatorPosition currentTarget = ElevatorPosition.DOWN;
+
+     private final ElevatorFeedforward m_feedForward = new ElevatorFeedforward(ElevatorConstants.kS,
+            ElevatorConstants.kG,
+            ElevatorConstants.kV,
+            ElevatorConstants.kA);
+  
+            private ElevatorPosition currentTarget = ElevatorPosition.DOWN;
     private boolean isHomed = false;
     private double setpoint = 0.0; 
     SparkMaxConfig resetConfig = new SparkMaxConfig();
@@ -63,10 +75,11 @@ public class Elevator extends SubsystemBase {
             ElevatorConstants.maxAcceleration
         );
         
-        pidController = new PIDController(
+        pidController = new ProfiledPIDController(
             ElevatorConstants.kP,
             ElevatorConstants.kI,
-            ElevatorConstants.kD
+            ElevatorConstants.kD,
+            constraints
         );
         
         pidController.setTolerance(0.5); // 0.5 inches position tolerance
@@ -131,12 +144,12 @@ public class Elevator extends SubsystemBase {
         setpoint = ElevatorConstants.bottomPos;
         currentState = new TrapezoidProfile.State(ElevatorConstants.bottomPos, 0);
         goalState = new TrapezoidProfile.State(ElevatorConstants.bottomPos, 0);
-        pidController.reset();
+        pidController.reset(ElevatorConstants.bottomPos);
     }
 
     public void stopMotors() {
         elevatorMotor.set(0);
-        pidController.reset();
+        pidController.reset(ElevatorConstants.bottomPos);
     }
 
     public boolean isAtHeight(double targetHeightInches) {
@@ -208,7 +221,7 @@ public class Elevator extends SubsystemBase {
 
     public void setManualPower(double power) {
         // Disable PID control when in manual mode
-        pidController.reset();
+        pidController.reset(ElevatorConstants.bottomPos);
         currentState = new TrapezoidProfile.State(getHeightInches(), 0);
         goalState = new TrapezoidProfile.State(getHeightInches(), 0);
         
@@ -228,13 +241,69 @@ public class Elevator extends SubsystemBase {
         
         elevatorMotor.set(MathUtil.clamp(power, -ElevatorConstants.max_output, ElevatorConstants.max_output));
     }
+
+    public double getPositionMeters() {
+        return encoder.getPosition() * (2 * Math.PI * ElevatorConstants.kElevatorDrumRadius)
+                / ElevatorConstants.kElevatorGearing;
+    }
+
+    public double getVelocityMetersPerSecond() {
+        return (encoder.getVelocity() / 60) * (2 * Math.PI * ElevatorConstants.kElevatorDrumRadius)
+                / ElevatorConstants.kElevatorGearing;
+    }
+
+    public void reachGoal(double goal){
+        double voltsOutput = MathUtil.clamp(
+                m_feedForward.calculateWithVelocities(getVelocityMetersPerSecond(), pidController.getSetpoint().velocity)
+                + pidController.calculate(getPositionMeters(), goal),
+                -7,
+                7);
+        elevatorMotor.setVoltage(voltsOutput);
+    }
+    
+
+    public Command holdElevator() {
+    return new RunCommand(() -> {
+        double currentHeight = getHeightInches(); // Get current height
+
+        double pidOutput = pidController.calculate(getHeightInches(), currentHeight);
+        double ff = calculateFeedForward(new TrapezoidProfile.State(currentHeight, 0));
+
+        double outputPower = MathUtil.clamp(
+            pidOutput + ff,
+            -ElevatorConstants.max_output,
+            ElevatorConstants.max_output
+        );
+
+        elevatorMotor.set(outputPower);
+    }, this);
+}
+
+
+    public Command setGoal(double goal){
+        return run(() -> reachGoal(goal));
+    }
+
+    public Command setElevatorHeight(double height){
+        return setGoal(height).until(()->aroundHeight(height));
+    }
+
+    public boolean aroundHeight(double height){
+        return aroundHeight(height, ElevatorConstants.posTolerance);
+    }
+    public boolean aroundHeight(double height, double tolerance){
+        return MathUtil.isNear(height,getPositionMeters(),tolerance);
+    }
+
+    
 }
 
 
 /*
  * 
  * 
- * Put these things in your code too in robotcontainer. Dont forget pleak
+ * Put these things in your 
+ * code too in robotcontainer. Dont forget pleak
  *
  *  Also change your elevatorconstants 😭
  * 

@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
@@ -99,6 +100,9 @@ public class RobotContainer
   public RobotContainer()
   {
     // Configure the trigger bindings
+    m_elevator.setDefaultCommand(
+      new RunCommand(() -> m_elevator.holdElevator(), m_elevator));
+    
     configureBindings();
     DriverStation.silenceJoystickConnectionWarning(true);
     NamedCommands.registerCommand("test", Commands.print("I EXIST"));
@@ -162,28 +166,10 @@ public class RobotContainer
       driverXbox.rightBumper().whileTrue(Commands.none());
 
 
-          //Operator commands
-  //  operatorXbox.leftBumper().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L1)));
-  //  operatorXbox.rightBumper().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L2)));
-  //  operatorXbox.leftTrigger().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L3)));
-  //   operatorXbox.rightTrigger().onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L4), m_elevator));
+      
 
-  // operatorXbox.rightTrigger().whileTrue(new InstantCommand(() -> m_elevator.setManualPower(.2)));
-  // // operatorXbox.rightTrigger().whileFalse(new InstantCommand(() -> m_elevator.setManualPower(0)));
-  // operatorXbox.rightTrigger().whileFalse(new InstantCommand(() -> m_elevator.stopMotors()));
+
   
-
-  //  operatorXbox.leftBumper().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-  //  operatorXbox.rightBumper().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-  //  operatorXbox.leftTrigger().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-  //  operatorXbox.rightTrigger().onFalse(new InstantCommand(() -> m_elevator.stopMotors()));
-
-  //  operatorXbox.a().onTrue(new InstantCommand(() -> m_elevator.homeElevator()));;
-
-
-  new Trigger(() -> operatorXbox.leftBumper().getAsBoolean())
-    .debounce(0.1)
-    .onTrue(new InstantCommand(() -> m_elevator.setPositionInches(ElevatorConstants.L1)));
 
     
    
@@ -193,9 +179,9 @@ public class RobotContainer
   operatorXbox.b().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
   operatorXbox.x().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
 
-  new Trigger(() -> operatorXbox.rightBumper().getAsBoolean())
-  .debounce(.1)
-  .onTrue(new InstantCommand(() -> intake.setPositionDegrees(Constants.IntakeConstants.STARTING)));
+  operatorXbox.a().onTrue( new RunCommand(() 
+                            -> m_elevator.setElevatorHeight
+                            (ElevatorConstants.L1), m_elevator));
  
   
  

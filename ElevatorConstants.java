@@ -30,7 +30,11 @@ public class ElevatorConstants {
     public static final double kS = 0.3; // Static friction feedforward (depends on motor characteristics)
     public static final double kG = 0.3; // Gravity feedforward (compensates for gravity)
     public static final double kV = 0.3; // Velocity feedforward (depends on your system)
+    public static final double kA = 0.3;
 
     public static final double minPos = 0; // Minimum setpoint (same as downPos)
+    public static final int kElevatorDrumRadius = 3;
+    public static final double kElevatorGearing = 3;
+    
 
 }
