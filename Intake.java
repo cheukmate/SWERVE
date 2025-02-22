@@ -4,174 +4,158 @@
 
 package frc.robot.subsystems;
 
-
-
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.AlternateEncoderConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.ElevatorConstants;
-
+import frc.robot.Constants.IntakeConstants;
 
 public class Intake extends SubsystemBase {
   /** Creates a new Intake. */
 
- 
-  SparkMax rotateMotor = new SparkMax(11, MotorType.kBrushless);
-  SparkMax wheelMotor = new SparkMax(9, MotorType.kBrushless);
+SparkMax turningMotor = new SparkMax(11, MotorType.kBrushless);
+SparkMax intakeMotor = new SparkMax(9, MotorType.kBrushless);
 
-    private final RelativeEncoder encoder;
-    private final PIDController pidController;
-    private double targetPosition; // Target position in degrees
 
-    private TrapezoidProfile.Constraints constraints;
-    private TrapezoidProfile profile;
-    private TrapezoidProfile.State currentState;
-    private TrapezoidProfile.State goalState;
-  
-  
-
-    public enum IntakePosition {
-
-            START(Constants.IntakeConstants.STARTING),
-            SCORING(Constants.IntakeConstants.SCORING),
-            OUT(Constants.IntakeConstants.OUTWARDS);
-        
-            public final double positionDegrees;
-
-        
-            IntakePosition(double positionDegrees) {
-                this.positionDegrees = positionDegrees;
-            }
-  }
-
+private SparkMaxConfig config;
+SparkClosedLoopController closedLoopController;
+private RelativeEncoder encoder;
 
   public Intake() {
+    config = new SparkMaxConfig();
+    config.inverted(false).idleMode(IdleMode.kBrake);
+//first PID is for position control, second is for velocity control.
+    config
+      .closedLoop
+      .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+      .p(Constants.IntakeConstants.kP)
+      .i(Constants.IntakeConstants.kI)
+      .d(Constants.IntakeConstants.kD)
+      .outputRange(-.1, .1)
 
-    encoder = rotateMotor.getEncoder();
-    pidController = new PIDController
+      .p(0.0002, ClosedLoopSlot.kSlot1)
+      .i(0.1, ClosedLoopSlot.kSlot1)
+      .d(0.00023, ClosedLoopSlot.kSlot1);
 
-              ( Constants.IntakeConstants.kPR,
-                Constants.IntakeConstants.kIR,
-                Constants.IntakeConstants.kDR );
+      closedLoopController = turningMotor.getClosedLoopController();
+      encoder = turningMotor.getEncoder();
     
-    pidController.setTolerance(1.0); // Tolerance in degrees
 
-    constraints = new TrapezoidProfile.Constraints(
-
-      Constants.IntakeConstants.maxVelocity,
-      Constants.IntakeConstants.maxAcceleration
-
-    );
-
- 
-      currentState = new TrapezoidProfile.State(0, 0);  // Starting at position 0 with velocity 0
-      goalState = new TrapezoidProfile.State(0, 0);     // Goal state will be updated when set
-      profile = new TrapezoidProfile(constraints);
-
-}
-      
-
-
+   turningMotor.configure(config, 
+                          ResetMode.kResetSafeParameters,
+                          PersistMode.kNoPersistParameters);
+    
+  }
 
   
 
-  public void setMotorBrake(boolean brake){
 
-    rotateMotor.set(0);
+   public void setPivotPosition(double targetPosition) {
+    turningMotor.getClosedLoopController().setReference(
+                                                        targetPosition,
+                                                        SparkMax.ControlType.kPosition);
+  }
+
+  public double getPivotPosition() {
+
+    return encoder.getPosition();
+
+}
+
+public void ZeroEncoder(){
+
+  encoder.setPosition(0);
+
+}
+
+public void IntakePosition(double targetPosition){
+
+setPivotPosition(Constants.IntakeConstants.IntakePosition);
+
+}
+
+public void ScoringPosition(double targetPosition){
+
+setPivotPosition(Constants.IntakeConstants.ScoringPosition);
+
+}
+
+
+
+
+
+  public void intakeCoral(double power){
+    
+    intakeMotor.set(.2222222222222);
 
   }
+
+  public void launchCoral(double power){
+intakeMotor.set(-.22222222);
+
+  }
+
+
+
+
+  public void stopIntake(double power){
+intakeMotor.set(0.01742);
+
+  }
+
+  public void turnIntakeTowardsFun(double power){
+turningMotor.set(.25);
+    
+      }
+
+  public void turnAway(double power){
+turningMotor.set(-.25);
+  }
+public void stopRotate(double power){
+turningMotor.set(0.08234234);
+}
+public void stopRotateScore(double power){
+  turningMotor.set(-0.13734234);
+  }
+
+
+
 
 
   @Override
   public void periodic() {
+SmartDashboard.putNumber("Encoder Value", turningMotor.getEncoder().getPosition());
+SmartDashboard.putNumber("Actual Position", encoder.getPosition());
+SmartDashboard.putNumber("Actual Velocity", encoder.getVelocity());
 
- // This method will be called once per scheduler run
-
-        double currentPosition = getCurrentPositionDegrees(); // Get current position in degrees
-
-        double pidOutput = pidController.calculate(currentPosition, 
-                                                    currentState.position);
-
-        double outputPower = MathUtil.clamp(pidOutput, 
-                                            -Constants.IntakeConstants.maxOutput,
-                                            Constants.IntakeConstants.maxOutput);
-
-        currentState = profile.calculate(0.020, currentState, goalState); // 20ms control loop
-
-        
-
-        rotateMotor.set(outputPower);
+if (SmartDashboard.getBoolean("Reset Encoder", false)) {
+  SmartDashboard.putBoolean("Reset Encoder", false);
+  // Reset the encoder position to 0
+ 
+  
+  SmartDashboard.setDefaultNumber("Target Position", 0);
+  SmartDashboard.setDefaultNumber("Target Velocity", 0);
+  SmartDashboard.setDefaultBoolean("Control Mode", false);
+  SmartDashboard.setDefaultBoolean("Reset Encoder", false);
 
 
-
+    // This method will be called once per scheduler run
+    }
   }
-
-  public void setPositionDegrees(double targetDegrees) {
-
-    // Convert target degrees to the corresponding encoder position
-
-    targetPosition = MathUtil.clamp
-
-    (targetDegrees, 0, 360); // 0-360 degrees
-
-    goalState = new TrapezoidProfile.State(targetPosition,
-                                           0);
-
-}
-
-public void shootCoral(double speed){
-
-wheelMotor.set
-(.2);
-
-}
-
-
-public void intakeCoral(double speed){
-
-wheelMotor.set
-(-.2);
-
-}
-
-
-public void stopItIntake(double speed){
-
-wheelMotor.set
-(0);
-
-}
-
-
-private double getCurrentPositionDegrees() {
-
-    // Convert encoder counts to degrees
-
-    return encoder.getPosition() * 360.0 / 
-    ElevatorConstants.countsPerInch;
-
-}
-
-public boolean isAtPosition() {
-
-    return pidController.atSetpoint();
-
-}
-
-
-public void stopMotor() {
-
-    rotateMotor.set(0);
-    pidController.reset();
-
-}
-
 }

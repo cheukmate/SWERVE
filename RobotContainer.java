@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,8 +18,10 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.subsystems.Elevator;
+//import frc.robot.subsystems.Climber;
+import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.Intake;
+// import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -34,12 +35,13 @@ public class RobotContainer
 {
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
-  
-  private Elevator m_elevator = new Elevator();
+  //private Climber climber = new Climber();
+  private ElevatorSubsystem m_elevator = new ElevatorSubsystem();
   private Intake intake = new Intake();
+  // private Intake intake = new Intake();
 
+  final         CommandXboxController driverXbox = new CommandXboxController(0);
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve/neo"));
@@ -99,10 +101,15 @@ public class RobotContainer
    */
   public RobotContainer()
   {
-    // Configure the trigger bindings
-    m_elevator.setDefaultCommand(
-      new RunCommand(() -> m_elevator.holdElevator(), m_elevator));
+
+    //climber.setDefaultCommand(
+        //new RunCommand (() -> climber.Climb(0), climber));
+    //  m_elevator.setDefaultCommand(
+    //     new RunCommand(() -> m_elevator.setManualPower(0), m_elevator));
+
+    //m_elevator.setDefaultCommand(m_elevator.setElevatorHeight(ElevatorConstants.bottomPos));
     
+    // Configure the trigger bindings
     configureBindings();
     DriverStation.silenceJoystickConnectionWarning(true);
     NamedCommands.registerCommand("test", Commands.print("I EXIST"));
@@ -128,6 +135,10 @@ public class RobotContainer
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
 
+
+
+
+
     if (RobotBase.isSimulation())
     {
       drivebase.setDefaultCommand(driveFieldOrientedDirectAngleKeyboard);
@@ -152,6 +163,7 @@ public class RobotContainer
       driverXbox.back().whileTrue(drivebase.centerModulesCommand());
       driverXbox.leftBumper().onTrue(Commands.none());
       driverXbox.rightBumper().onTrue(Commands.none());
+      
     } else
     {
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
@@ -163,32 +175,112 @@ public class RobotContainer
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.rightBumper().whileTrue(Commands.none());
+      driverXbox.rightBumper().onTrue(Commands.none());
 
-
-      
+    //Operator commands
 
 
   
+// operatorXbox.b().onTrue(new InstantCommand(() -> intake.shootCoral(.2)));
+// operatorXbox.x().onTrue(new InstantCommand(() -> intake.intakeCoral(-.2)));
+
+// operatorXbox.b().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
+// operatorXbox.x().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
+
+//  operatorXbox.a().whileTrue( new RunCommand(() 
+//          -> m_elevator.setElevatorHeight
+//             (ElevatorConstants.L2), m_elevator));
+
+
+// operatorXbox.a().whileTrue( new RunCommand(() 
+// -> m_elevator.setManualPower(.6)
+//    , m_elevator));
+
+//   operatorXbox.y().onTrue( new RunCommand(() 
+//             -> m_elevator.setManualPower(-.6)
+//                , m_elevator));
+
+// operatorXbox.a().whileFalse( new RunCommand(() 
+//             -> m_elevator.setManualPower(0)
+//              ,m_elevator));
+
+// operatorXbox.a().whileTrue(m_elevator.setElevatorHeight(ElevatorConstants.L2));
+
+// TODO: bind the elevator commands.... when you make them
+
+ operatorXbox.a().onTrue( new InstantCommand(() ->
+              m_elevator.setManualPower(.5)));
+
+operatorXbox.a().onFalse( new InstantCommand(() ->
+              m_elevator.Stop(0)));
+
+operatorXbox.b().onTrue( new InstantCommand(() ->
+              m_elevator.goDown(-.5)));
+
+operatorXbox.b().onFalse( new InstantCommand(() ->
+              m_elevator.Stop(0)));
+
+
+//coral manip
+
+operatorXbox.x().onTrue( new InstantCommand(() ->
+              intake.intakeCoral(.2)));
+
+operatorXbox.y().onTrue( new InstantCommand(() ->
+              intake.launchCoral(-.2)));
+
+
+operatorXbox.rightBumper().onTrue( new InstantCommand(() ->
+              intake.ScoringPosition(Constants.IntakeConstants.ScoringPosition)));
+
+operatorXbox.leftBumper().onTrue( new InstantCommand(() -> 
+                intake.IntakePosition(Constants.IntakeConstants.IntakePosition)));
+
+
+
+
+
+operatorXbox.x().onFalse( new InstantCommand(() ->
+              intake.stopIntake(0)));
+
+operatorXbox.y().onFalse( new InstantCommand(() ->
+              intake.stopIntake(0)));
+
+
+operatorXbox.rightBumper().onFalse( new InstantCommand(() ->
+              intake.stopRotateScore(-0.012342340)));
+
+operatorXbox.leftBumper().onFalse( new InstantCommand(() ->
+              intake.stopRotate(0.01234234)));
+              
+operatorXbox.pov(180).onTrue(new InstantCommand(() -> intake.ZeroEncoder()));
+
+
+
+
+//     operatorXbox.b().whileTrue( new InstantCommand(() ->
+//              climber.Climb(-.5)));
 
     
-   
-  operatorXbox.b().onTrue(new InstantCommand(() -> intake.shootCoral(.2)));
-  operatorXbox.x().onTrue(new InstantCommand(() -> intake.intakeCoral(-.2)));
+//   operatorXbox.b().whileFalse( new InstantCommand(() ->
+//   climber.Climb(0)));
 
-  operatorXbox.b().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
-  operatorXbox.x().onFalse(new InstantCommand(() -> intake.stopItIntake(0)));
 
-  operatorXbox.a().onTrue( new RunCommand(() 
-                            -> m_elevator.setElevatorHeight
-                            (ElevatorConstants.L1), m_elevator));
- 
-  
- 
+
+//   operatorXbox.b().whileFalse( new InstantCommand(() ->
+//   climber.Climb(0)));
+
+
 
     }
-
+  
+  
   }
+  
+    
+
+
+  
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

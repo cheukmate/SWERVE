@@ -24,7 +24,6 @@ public final class Constants
   public static final double LOOP_TIME  = 0.13; //s, 20ms + 110ms sprk max velocity lag
   public static final double MAX_SPEED  = Units.feetToMeters(14.5);
   // Maximum speed of the robot in meters per second, used to limit acceleration.
-public static final String VisionConstants = null;
 
 //  public static final class AutonConstants
 //  {
@@ -33,38 +32,36 @@ public static final String VisionConstants = null;
 //    public static final PIDConstants ANGLE_PID       = new PIDConstants(0.4, 0, 0.01);
 //  }
 
-
-public static final class IntakeConstants{
-
-  public static final double kPR = 0.1;
-  public static final double kIR = 0.001;
-  public static final double kDR = 0.3;
-
-  public static final double maxOutput = .35;
-  public static final double maxVelocity = .75;
-  public static final double maxAcceleration =.75;
-
-  public static final double STARTING = 0;
-  public static final double SCORING = 45;
-  public static final double OUTWARDS = 130;
-}
-
-public static final class DrivebaseConstants{
-
-  // Hold time on motor brakes when disabled
-
-  public static final double WHEEL_LOCK_TIME = 10; // seconds
-
-  }
-
-public static class OperatorConstants
+  public static final class DrivebaseConstants
   {
-    // Joystick Deadband
 
-  public static final double DEADBAND        = 0.1;
-  public static final double LEFT_Y_DEADBAND = 0.1;
-  public static final double RIGHT_X_DEADBAND = 0.1;
-  public static final double TURN_CONSTANT    = 6;
-
+    // Hold time on motor brakes when disabled
+    public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
+
+  public static class OperatorConstants
+  {
+
+    // Joystick Deadband
+    public static final double DEADBAND        = 0.2;
+    public static final double LEFT_Y_DEADBAND = 0.1;
+    public static final double RIGHT_X_DEADBAND = 0.1;
+    public static final double TURN_CONSTANT    = 6;
+  }
+
+  public static final class IntakeConstants{
+
+    public static final double kP = 1.0085;
+    public static final double kI = 1.001;
+    public static final double kD = 1.1;
+  
+    public static final double maxOutput = .35;
+    public static final double maxVelocity = .40;
+    public static final double maxAcceleration =.40;
+  
+    public static final double IntakePosition = 0.00;
+    public static final double ScoringPosition = -1.20571472925;
+    
+  }
+  
 }
