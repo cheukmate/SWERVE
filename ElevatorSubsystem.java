@@ -25,8 +25,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     
     config = new SparkMaxConfig();
     config.inverted(false).idleMode(IdleMode.kBrake);
-    config.encoder.positionConversionFactor(1000) // calculation here 
-                  .velocityConversionFactor(0); // is this right?
+    config.encoder.positionConversionFactor(2.093) //  distance per rev / gear ratio
+                  .velocityConversionFactor(0.03488); // posconfac/60 . we need persec
     config
           .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
