@@ -95,6 +95,7 @@ return elevatorMotor.getEncoder().getPosition();
 
   @Override
   public void periodic() {
+    SmartDashboard.putNumber("Elevator Position", getPos());
     // This method will be called once per scheduler run
   }
 }
